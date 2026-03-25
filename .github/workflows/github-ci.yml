@@ -1,0 +1,61 @@
+name: GitHub Actions Pipeline
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  # --- Stage 1: Build ---
+  build-and-test:
+    name: Build & Test (Baseline)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: echo "Building the application..." && npm install
+
+      - name: Run Unit Tests
+        run: echo "Running standard unit tests..." && npm test
+        continue-on-error: true
+
+  # --- Stage 2: Security (SAST) ---
+  security-sast:
+    name: Semgrep SAST Scan
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    
+    # same Docker image as GitLab.
+    container:
+      image: returntocorp/semgrep:latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Execute Semgrep Scan
+        env:
+          # Same rulesets used in the GitLab experiment
+          SEMGREP_RULES: p/javascript p/owasp-top-ten
+        run: |
+          echo "Executing Semgrep SAST scan..."
+          semgrep scan --json --output sast-results.json .
+        # Note: If Semgrep finds vulnerabilities, this step will exit with an error code 
+
+      - name: Upload SAST Artifact
+        # We use 'always()' so the artifact uploads even if the previous step fails the build
+        if: always() 
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-sast-results
+          path: sast-results.json
+          retention-days: 7
