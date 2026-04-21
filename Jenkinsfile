@@ -34,7 +34,8 @@ pipeline {
                           -v $(pwd):/src \
                           -w /src \
                           returntocorp/semgrep:latest \
-                          semgrep scan --json --output sast-results.json --config="p/javascript" --config="p/owasp-top-ten" --exclude="codeql-db" --exclude="node_modules" --exclude="codeql-results.sarif" .
+                          semgrep scan --json --output sast-results.json --config="p/javascript" --config="p/owasp-top-ten" --exclude="codeql-db" --exclude="node_modules" --exclude="codeql-results.sarif" --exclude="codeql" .
+                          
                         '''
                     }
                     post {
