@@ -63,8 +63,8 @@ pipeline {
                         codeql database analyze codeql-db javascript-security-extended.qls \
                           --format=sarif-latest \
                           --output=codeql-results.sarif \
-                          --ram=3072 \
-                          --threads=2
+                          --ram=12000 \
+                          --threads=8
                         '''
                     }
                     post {
