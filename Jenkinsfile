@@ -57,7 +57,7 @@ pipeline {
                         export PATH=$PATH:$(pwd)/codeql
                         
                         echo "Step 2: Creating CodeQL Database..."
-                        codeql database create codeql-db --language=javascript-typescript
+                        codeql database create codeql-db --language=javascript-typescript --overwrite
                         
                         echo "Step 3: Running CodeQL Analysis (Memory Optimized)..."
                         codeql database analyze codeql-db javascript-security-extended.qls \
