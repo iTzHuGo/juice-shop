@@ -21,13 +21,58 @@ pipeline {
             }
         }
 
-        stage('Functional Testing') {
-            steps {
-                echo "Running standard unit tests..."
-                // catchError ensures the pipeline finishes and reports the state, 
-                // even if Juice Shop's internal tests throw an error.
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    sh 'npm test'
+        stage('Security Scanning (SAST)') {
+            parallel {
+                
+                // --- Stage 2a: Agnostic Security (Semgrep via Docker) ---
+                stage('Semgrep SAST') {
+                    steps {
+                        echo "Executing Semgrep SAST scan via Docker..."
+                        // We mount the Jenkins workspace into the Semgrep container
+                        sh '''
+                        docker run --rm \
+                          -v $(pwd):/src \
+                          -w /src \
+                          returntocorp/semgrep:latest \
+                          semgrep scan --json --output sast-results.json --config="p/javascript" --config="p/owasp-top-ten" .
+                        '''
+                    }
+                    post {
+                        always {
+                            // Save the JSON artifact to the Jenkins UI
+                            archiveArtifacts artifacts: 'sast-results.json', allowEmptyArchive: true
+                        }
+                    }
+                }
+
+                // --- Stage 2b: Proprietary Security (CodeQL CLI) ---
+                stage('CodeQL SAST') {
+                    steps {
+                        echo "Executing CodeQL CLI Scan..."
+                        // Using the memory-optimized script from our GitLab learnings!
+                        sh '''
+                        echo "Step 1: Downloading CodeQL CLI Bundle..."
+                        wget -q https://github.com/github/codeql-action/releases/latest/download/codeql-bundle-linux64.tar.gz
+                        tar -xzf codeql-bundle-linux64.tar.gz
+                        export PATH=$PATH:$(pwd)/codeql
+                        
+                        echo "Step 2: Creating CodeQL Database..."
+                        codeql database create codeql-db --language=javascript-typescript
+                        
+                        echo "Step 3: Running CodeQL Analysis (Memory Optimized)..."
+                        codeql database analyze codeql-db javascript-security-extended.qls \
+                          --format=sarif-latest \
+                          --output=codeql-results.sarif \
+                          --ram=3072 \
+                          --threads=2
+                        '''
+                    }
+                    post {
+                        always {
+                            // Save the SARIF artifact to the Jenkins UI
+                            archiveArtifacts artifacts: 'codeql-results.sarif', allowEmptyArchive: true
+                        }
+                    }
                 }
             }
         }
@@ -35,7 +80,7 @@ pipeline {
     
     post {
         always {
-            echo "Baseline Pipeline execution complete."
+            echo "DevSecOps Pipeline execution complete."
         }
     }
 }
