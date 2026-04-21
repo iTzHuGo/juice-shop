@@ -27,7 +27,7 @@ jobs:
         run: echo "Running standard unit tests..." && npm test
         continue-on-error: true
 
-  # --- Stage 2: Security (SAST) ---
+  # --- Stage 2a: Security (SAST Semgrep) ---
   security-sast:
     name: Semgrep SAST Scan
     needs: build-and-test
@@ -57,4 +57,43 @@ jobs:
         with:
           name: semgrep-sast-results
           path: sast-results.json
+          retention-days: 7
+
+  # --- Stage 2b: Native Security (CodeQL) ---
+  security-sast-codeql:
+    name: CodeQL SAST Scan
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    # CodeQL requires specific permissions to write to the GitHub Security tab
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          # Juice Shop uses JS/TS
+          languages: 'javascript-typescript'
+          # We use the extended security suite to give CodeQL its best chance
+          queries: security-extended 
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"
+          # This tells CodeQL to output the SARIF file to a specific folder so we can extract it
+          output: codeql-results 
+
+      - name: Upload CodeQL Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-sast-results
+          # Uploads the folder containing the javascript.sarif file
+          path: codeql-results
           retention-days: 7
