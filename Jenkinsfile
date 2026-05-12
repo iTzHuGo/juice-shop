@@ -55,6 +55,7 @@ pipeline {
                         echo "Step 1: Downloading CodeQL CLI Bundle..."
                         wget -q https://github.com/github/codeql-action/releases/latest/download/codeql-bundle-linux64.tar.gz
                         tar -xzf codeql-bundle-linux64.tar.gz
+                        rm codeql-bundle-linux64.tar.gz
                         export PATH=$PATH:$(pwd)/codeql
                         
                         echo "Step 2: Creating CodeQL Database..."
