@@ -80,13 +80,19 @@ pipeline {
                 stage('SonarQube SAST') {
                     steps {
                         echo "Executing SonarQube Analysis..."
-                        def scannerHome = tool 'SonarScanner'
-                        withSonarQubeEnv('Sonar-VM') {
-                            sh "${scannerHome}/bin/sonar-scanner \
-                                -Dsonar.projectKey=juice-shop-thesis \
-                                -Dsonar.sources=. \
-                                -Dsonar.host.url=http://10.17.0.250:9000 \
-                                -Dsonar.javascript.node.maxspace=3072"
+                        
+                        // We MUST use a script block to declare variables in a Declarative Pipeline
+                        script {
+                            def scannerHome = tool 'SonarScanner'
+                            
+                            // Wraps the execution using the server credentials
+                            withSonarQubeEnv('Sonar-VM') {
+                                sh "${scannerHome}/bin/sonar-scanner \
+                                    -Dsonar.projectKey=juice-shop-thesis \
+                                    -Dsonar.sources=. \
+                                    -Dsonar.host.url=http://<your-sonarqube-vm-public-ip>:9000 \
+                                    -Dsonar.javascript.node.maxspace=3072"
+                            }
                         }
                     }
                 }
