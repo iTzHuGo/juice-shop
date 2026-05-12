@@ -52,21 +52,31 @@ pipeline {
                         echo "Executing CodeQL CLI Scan..."
                         // Using the memory-optimized script from our GitLab learnings!
                         sh '''
+                        # Create a unique temporary directory OUTSIDE the Jenkins workspace
+                        export CQ_TMP="/tmp/codeql-thesis-${BUILD_NUMBER}"
+                        mkdir -p $CQ_TMP
+                        
                         echo "Step 1: Downloading CodeQL CLI Bundle..."
-                        wget -q https://github.com/github/codeql-action/releases/latest/download/codeql-bundle-linux64.tar.gz
-                        tar -xzf codeql-bundle-linux64.tar.gz
-                        rm codeql-bundle-linux64.tar.gz
-                        export PATH=$PATH:$(pwd)/codeql
+                        # Download and extract directly to the /tmp folder
+                        wget -q https://github.com/github/codeql-action/releases/latest/download/codeql-bundle-linux64.tar.gz -O $CQ_TMP/codeql-bundle.tar.gz
+                        tar -xzf $CQ_TMP/codeql-bundle.tar.gz -C $CQ_TMP
+                        export PATH=$PATH:$CQ_TMP/codeql
                         
-                        echo "Step 2: Creating CodeQL Database..."
-                        codeql database create codeql-db --language=javascript-typescript --overwrite
+                        echo "Step 2: Creating CodeQL Database Out-of-Tree..."
+                        # We build the DB in /tmp, but tell it to scan the current directory (.)
+                        codeql database create $CQ_TMP/codeql-db --language=javascript-typescript --source-root .
                         
-                        echo "Step 3: Running CodeQL Analysis (Memory Optimized)..."
-                        codeql database analyze codeql-db javascript-security-extended.qls \
+                        echo "Step 3: Running CodeQL Analysis (Unleashed!)..."
+                        # Output the SARIF file back into the Jenkins workspace so we can archive it
+                        codeql database analyze $CQ_TMP/codeql-db javascript-security-extended.qls \
                           --format=sarif-latest \
-                          --output=codeql-results.sarif \
+                          --output=$(pwd)/codeql-results.sarif \
                           --ram=12000 \
                           --threads=8
+                          
+                        echo "Step 4: Cleanup..."
+                        # Nuke the temporary folder to save disk space
+                        rm -rf $CQ_TMP
                         '''
                     }
                     post {
