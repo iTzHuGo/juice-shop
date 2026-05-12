@@ -90,7 +90,7 @@ pipeline {
                                 sh "${scannerHome}/bin/sonar-scanner \
                                     -Dsonar.projectKey=juice-shop-thesis \
                                     -Dsonar.sources=. \
-                                    -Dsonar.host.url=http://<your-sonarqube-vm-public-ip>:9000 \
+                                    -Dsonar.host.url=http://10.17.0.250:9000 \
                                     -Dsonar.javascript.node.maxspace=3072"
                             }
                         }
