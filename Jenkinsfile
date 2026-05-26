@@ -102,7 +102,7 @@ pipeline {
                                     -Dsonar.projectKey=juice-shop-thesis \
                                     -Dsonar.sources=. \
                                     -Dsonar.exclusions=**/codeql/**,**/codeql-db/**,**/*.tar.gz,**/node_modules/**,**/sast-results.json,**/codeql-results.sarif \
-                                    -Dsonar.host.url=http://10.17.0.250:9000 \
+                                    -Dsonar.host.url=https://sonarqube.dei.uc.pt \
                                     -Dsonar.javascript.node.maxspace=3072"
                             }
                         }
