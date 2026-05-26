@@ -97,3 +97,24 @@ jobs:
           # Uploads the folder containing the javascript.sarif file
           path: codeql-results
           retention-days: 7
+
+  # --- Stage 2c: SonarQube ---
+  security-sast-sonarqube:
+    name: SonarQube Enterprise SAST
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # SonarQube requires full git history for blame and metrics
+
+      - name: Execute SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: >
+            -Dsonar.projectKey=juice-shop-thesis
+            -Dsonar.sources=.
