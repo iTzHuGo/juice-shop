@@ -7,7 +7,7 @@ jobs:
   # --- Stage 1: Build ---
   build-and-test:
     name: Build & Test (Baseline)
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -28,7 +28,7 @@ jobs:
   security-sast:
     name: Semgrep SAST Scan
     needs: build-and-test
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     
     # same Docker image as GitLab.
     container:
@@ -60,7 +60,7 @@ jobs:
   security-sast-codeql:
     name: CodeQL SAST Scan
     needs: build-and-test
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     # CodeQL requires specific permissions to write to the GitHub Security tab
     permissions:
       security-events: write
@@ -99,7 +99,7 @@ jobs:
   security-sast-sonarqube:
     name: SonarQube Enterprise SAST
     needs: build-and-test
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     
     steps:
       - name: Checkout Code
