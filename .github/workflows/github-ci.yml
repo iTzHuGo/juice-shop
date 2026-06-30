@@ -54,7 +54,7 @@ jobs:
         with:
           name: semgrep-sast-results
           path: sast-results.json
-          retention-days: 7
+          retention-days: 90
 
   # --- Stage 2b: Native Security (CodeQL) ---
   security-sast-codeql:
@@ -93,7 +93,7 @@ jobs:
           name: codeql-sast-results
           # Uploads the folder containing the javascript.sarif file
           path: codeql-results
-          retention-days: 7
+          retention-days: 90
 
   # --- Stage 2c: SonarQube ---
   security-sast-sonarqube:
